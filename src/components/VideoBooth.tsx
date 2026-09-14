@@ -2,12 +2,15 @@ import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Camera, Square, Upload, ArrowLeft, RefreshCw } from 'lucide-react';
 import { useConfig } from '../context/ConfigContext';
+import { supabase } from '../lib/supabase';
 
 export function VideoBooth() {
-  const { config, addLocalVideo } = useConfig();
+  const { config } = useConfig();
   const navigate = useNavigate();
   
   const [isRecording, setIsRecording] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [recordedVideoBlob, setRecordedVideoBlob] = useState<Blob | null>(null);
   const [recordedVideoUrl, setRecordedVideoUrl] = useState<string | null>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [permissionDenied, setPermissionDenied] = useState(false);
@@ -17,7 +20,6 @@ export function VideoBooth() {
   const chunksRef = useRef<Blob[]>([]);
 
   useEffect(() => {
-    // Solicitar cámara al montar el componente
     async function enableStream() {
       try {
         const mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
@@ -32,7 +34,6 @@ export function VideoBooth() {
     }
     enableStream();
 
-    // Limpiar cámara al desmontar
     return () => {
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
@@ -55,9 +56,9 @@ export function VideoBooth() {
     mediaRecorder.onstop = () => {
       const blob = new Blob(chunksRef.current, { type: 'video/webm' });
       const url = URL.createObjectURL(blob);
+      setRecordedVideoBlob(blob);
       setRecordedVideoUrl(url);
       
-      // Detener los tracks de la cámara
       stream.getTracks().forEach(track => track.stop());
       setStream(null);
     };
@@ -75,10 +76,10 @@ export function VideoBooth() {
   };
 
   const resetRecording = async () => {
+    setRecordedVideoBlob(null);
     if (recordedVideoUrl) URL.revokeObjectURL(recordedVideoUrl);
     setRecordedVideoUrl(null);
     
-    // Volver a pedir cámara
     try {
       const mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
       setStream(mediaStream);
@@ -90,12 +91,41 @@ export function VideoBooth() {
     }
   };
 
-  const handleUpload = () => {
-    if (recordedVideoUrl) {
-      // Por ahora, solo lo guardamos localmente en memoria
-      addLocalVideo(recordedVideoUrl);
+  const handleUpload = async () => {
+    if (!recordedVideoBlob) return;
+    setIsUploading(true);
+
+    try {
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.webm`;
+      
+      // 1. Subir video al Storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('videos')
+        .upload(fileName, recordedVideoBlob, {
+          contentType: 'video/webm'
+        });
+
+      if (uploadError) throw uploadError;
+
+      // 2. Obtener URL pública
+      const { data: publicUrlData } = supabase.storage
+        .from('videos')
+        .getPublicUrl(fileName);
+
+      // 3. Guardar en la base de datos
+      const { error: dbError } = await supabase
+        .from('videos')
+        .insert([{ video_url: publicUrlData.publicUrl }]);
+
+      if (dbError) throw dbError;
+
       alert(config.texts.successMessage);
       navigate('/');
+    } catch (error) {
+      console.error("Error subiendo el video:", error);
+      alert("Hubo un error al subir el video. Por favor intenta de nuevo.");
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -165,11 +195,11 @@ export function VideoBooth() {
 
           {recordedVideoUrl && (
             <>
-              <button className="btn-primary" style={{ background: '#555' }} onClick={resetRecording}>
+              <button className="btn-primary" style={{ background: '#555' }} onClick={resetRecording} disabled={isUploading}>
                 <RefreshCw /> Repetir
               </button>
-              <button className="btn-primary" style={{ background: '#28a745', boxShadow: '0 4px 15px rgba(40,167,69,0.3)' }} onClick={handleUpload}>
-                <Upload /> Subir Mensaje
+              <button className="btn-primary" style={{ background: '#28a745', boxShadow: '0 4px 15px rgba(40,167,69,0.3)' }} onClick={handleUpload} disabled={isUploading}>
+                <Upload /> {isUploading ? 'Subiendo...' : 'Subir Mensaje'}
               </button>
             </>
           )}

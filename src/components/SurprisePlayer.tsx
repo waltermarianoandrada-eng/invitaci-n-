@@ -1,14 +1,38 @@
 import { useState, useRef, useEffect } from 'react';
 import { Play } from 'lucide-react';
 import { useConfig } from '../context/ConfigContext';
+import { supabase } from '../lib/supabase';
 
 export function SurprisePlayer() {
-  const { config, localVideos } = useConfig();
+  const { config } = useConfig();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [videos, setVideos] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  const videos = localVideos.length > 0 ? localVideos : [];
+  useEffect(() => {
+    async function fetchVideos() {
+      try {
+        const { data, error } = await supabase
+          .from('videos')
+          .select('video_url')
+          .order('created_at', { ascending: true });
+          
+        if (error) throw error;
+        
+        if (data) {
+          setVideos(data.map(v => v.video_url));
+        }
+      } catch (err) {
+        console.error("Error fetching videos:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    
+    fetchVideos();
+  }, []);
 
   const handleVideoEnd = () => {
     if (currentIndex < videos.length - 1) {
@@ -24,6 +48,14 @@ export function SurprisePlayer() {
       videoRef.current.play().catch(e => console.error("Auto-play prevented", e));
     }
   }, [currentIndex, isPlaying]);
+
+  if (isLoading) {
+    return (
+      <div className="page-container" style={{ backgroundColor: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <h2 style={{ color: '#fff' }}>Cargando sorpresas...</h2>
+      </div>
+    );
+  }
 
   if (videos.length === 0) {
     return (
