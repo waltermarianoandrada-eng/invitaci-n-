@@ -1,14 +1,18 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
+import type { ReactNode } from 'react';
 import { config as defaultConfig, type AppConfig } from '../config';
 
 interface ConfigContextType {
   config: AppConfig;
   updateConfig: (newConfig: AppConfig) => void;
+  localVideos: string[];
+  addLocalVideo: (url: string) => void;
 }
 
 const ConfigContext = createContext<ConfigContextType | undefined>(undefined);
 
 export function ConfigProvider({ children }: { children: ReactNode }) {
+  const [localVideos, setLocalVideos] = useState<string[]>([]);
   const [config, setConfig] = useState<AppConfig>(() => {
     const saved = localStorage.getItem('appConfig');
     return saved ? JSON.parse(saved) : defaultConfig;
@@ -28,8 +32,12 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('appConfig', JSON.stringify(newConfig));
   };
 
+  const addLocalVideo = (url: string) => {
+    setLocalVideos(prev => [...prev, url]);
+  };
+
   return (
-    <ConfigContext.Provider value={{ config, updateConfig }}>
+    <ConfigContext.Provider value={{ config, updateConfig, localVideos, addLocalVideo }}>
       {children}
     </ConfigContext.Provider>
   );

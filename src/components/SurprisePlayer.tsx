@@ -2,20 +2,16 @@ import { useState, useRef, useEffect } from 'react';
 import { Play } from 'lucide-react';
 import { useConfig } from '../context/ConfigContext';
 
-const MOCK_VIDEOS = [
-  'https://www.w3schools.com/html/mov_bbb.mp4',
-  'https://www.w3schools.com/html/mov_bbb.mp4',
-  'https://www.w3schools.com/html/mov_bbb.mp4'
-];
-
 export function SurprisePlayer() {
-  const { config } = useConfig();
+  const { config, localVideos } = useConfig();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
+  const videos = localVideos.length > 0 ? localVideos : [];
+
   const handleVideoEnd = () => {
-    if (currentIndex < MOCK_VIDEOS.length - 1) {
+    if (currentIndex < videos.length - 1) {
       setCurrentIndex(prev => prev + 1);
     } else {
       setIsPlaying(false);
@@ -29,6 +25,17 @@ export function SurprisePlayer() {
     }
   }, [currentIndex, isPlaying]);
 
+  if (videos.length === 0) {
+    return (
+      <div className="page-container" style={{ backgroundColor: '#000' }}>
+        <div className="glass" style={{ padding: '3rem', textAlign: 'center' }}>
+          <h2>Aún no hay mensajes grabados 😢</h2>
+          <p style={{ marginTop: '1rem' }}>Graba el primero y vuelve a revisar.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="page-container" style={{ padding: 0, justifyContent: 'flex-start', backgroundColor: '#000' }}>
       {!isPlaying ? (
@@ -40,10 +47,10 @@ export function SurprisePlayer() {
           </button>
         </div>
       ) : (
-        <div style={{ position: 'relative', width: '100%', height: '100vh' }}>
+        <div style={{ position: 'relative', width: '100%', height: '100vh', backgroundColor: '#000' }}>
           <video 
             ref={videoRef}
-            src={MOCK_VIDEOS[currentIndex]} 
+            src={videos[currentIndex]} 
             onEnded={handleVideoEnd}
             style={{ width: '100%', height: '100%', objectFit: 'contain' }}
             autoPlay
@@ -52,7 +59,7 @@ export function SurprisePlayer() {
           
           {/* Stories Progress Bar */}
           <div style={{ position: 'absolute', top: '20px', left: '20px', right: '20px', display: 'flex', gap: '5px', zIndex: 10 }}>
-            {MOCK_VIDEOS.map((_, idx) => (
+            {videos.map((_, idx) => (
               <div key={idx} style={{ 
                 flex: 1, 
                 height: '4px', 
