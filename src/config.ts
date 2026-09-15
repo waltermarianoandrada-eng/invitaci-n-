@@ -24,7 +24,7 @@ export const config: AppConfig = {
   eventName: "Cumpleaños Sorpresa",
   eventType: "birthday",
   eventDate: "2026-10-15T20:00:00",
-  hostName: "María",
+  hostName: "Tomás",
   hostAge: 30,
   theme: {
     primaryColor: "#FF4785",
@@ -34,7 +34,7 @@ export const config: AppConfig = {
     fontFamily: "'Inter', sans-serif"
   },
   texts: {
-    landingTitle: "¡Celebramos a María!",
+    landingTitle: "¡Celebramos a Tomás!",
     landingSubtitle: "Ayúdanos a darle una sorpresa inolvidable dejando tu mensaje en video.",
     recordButton: "Dejar un mensaje sorpresa",
     countdownPrefix: "Faltan",
