@@ -99,7 +99,7 @@ export function VideoBooth() {
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.webm`;
       
       // 1. Subir video al Storage
-      const { data: uploadData, error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('videos')
         .upload(fileName, recordedVideoBlob, {
           contentType: 'video/webm'
