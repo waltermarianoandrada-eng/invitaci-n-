@@ -77,6 +77,18 @@ export function AdminPanel() {
       <div className="glass" style={{ padding: '2rem', width: '100%', maxWidth: '800px', margin: '0 auto' }}>
         <h2>Panel de Configuración</h2>
         
+        <div style={{ marginTop: '1.5rem', padding: '1.5rem', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.1)' }}>
+          <h3 style={{ marginBottom: '1rem' }}>Acciones Rápidas</h3>
+          <button 
+            type="button" 
+            className="btn-primary" 
+            style={{ background: 'linear-gradient(135deg, #ff4444, #ff8888)', boxShadow: '0 4px 15px rgba(255,68,68,0.3)' }}
+            onClick={() => navigate('/sorpresa')}
+          >
+            🎬 Ir a ver los Videos Sorpresa
+          </button>
+        </div>
+        
         <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '2rem', marginTop: '2rem' }}>
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
