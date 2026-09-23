@@ -21,9 +21,9 @@ export function AdminPanel() {
     }
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    updateConfig(formData);
+    await updateConfig(formData);
     alert('Configuración guardada exitosamente.');
     navigate('/');
   };

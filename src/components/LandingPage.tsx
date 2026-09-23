@@ -9,7 +9,7 @@ export function LandingPage() {
       <Link to="/admin" style={{ position: 'absolute', top: '2rem', right: '2rem', color: 'rgba(255,255,255,0.3)', textDecoration: 'none' }}>
         <Settings size={24} />
       </Link>
-      <div className="glass" style={{ padding: '3rem', textAlign: 'center', maxWidth: '600px', width: '100%' }}>
+      <div className="glass card">
         <h3 style={{ color: 'var(--secondary-color)', marginBottom: '1rem', fontWeight: 600, letterSpacing: '2px', textTransform: 'uppercase' }}>
           {config.texts.countdownPrefix} 15 días
         </h3>
