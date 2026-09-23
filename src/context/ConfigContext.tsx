@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { config as defaultConfig, type AppConfig } from '../config';
+import { supabase } from '../lib/supabase';
 
 interface ConfigContextType {
   config: AppConfig;
@@ -18,6 +19,33 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
     return saved ? JSON.parse(saved) : defaultConfig;
   });
 
+  // Cargar configuración de Supabase al iniciar
+  useEffect(() => {
+    const fetchConfig = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('app_config')
+          .select('config')
+          .eq('id', 1)
+          .single();
+
+        if (error && error.code !== 'PGRST116') {
+          console.error('Error fetching config from Supabase:', error);
+          return;
+        }
+        
+        if (data && data.config) {
+          setConfig(data.config as AppConfig);
+          localStorage.setItem('appConfig', JSON.stringify(data.config));
+        }
+      } catch (err) {
+        console.error('Unexpected error fetching config:', err);
+      }
+    };
+
+    fetchConfig();
+  }, []);
+
   useEffect(() => {
     // Inyectar variables CSS cuando la configuración cambie
     document.documentElement.style.setProperty('--primary-color', config.theme.primaryColor);
@@ -27,9 +55,21 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
     document.documentElement.style.setProperty('--font-family', config.theme.fontFamily);
   }, [config]);
 
-  const updateConfig = (newConfig: AppConfig) => {
+  const updateConfig = async (newConfig: AppConfig) => {
+    // Actualizar localmente primero para UX rápida
     setConfig(newConfig);
     localStorage.setItem('appConfig', JSON.stringify(newConfig));
+
+    // Guardar en Supabase
+    try {
+      const { error } = await supabase
+        .from('app_config')
+        .upsert({ id: 1, config: newConfig });
+        
+      if (error) throw error;
+    } catch (err) {
+      console.error('Error saving config to Supabase:', err);
+    }
   };
 
   const addLocalVideo = (url: string) => {
